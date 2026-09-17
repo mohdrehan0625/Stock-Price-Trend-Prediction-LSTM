@@ -1,8 +1,9 @@
 streamlit
 yfinance
-numpy
+numpy<2.0.0
 pandas
 matplotlib
 scikit-learn
-tensorflow
 joblib
+keras
+tensorflow-cpu==2.15.0
