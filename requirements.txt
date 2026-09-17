@@ -4,5 +4,5 @@ numpy
 pandas
 matplotlib
 scikit-learn
-tensorflow-cpu
+tensorflow
 joblib
