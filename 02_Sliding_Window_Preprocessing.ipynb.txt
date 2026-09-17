@@ -1,0 +1,101 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "code",
+      "source": [
+        "import yfinance as yf\n",
+        "import numpy as np\n",
+        "import pandas as pd\n",
+        "from sklearn.preprocessing import MinMaxScaler\n",
+        "from numpy.lib.stride_tricks import sliding_window_view\n",
+        "import joblib\n",
+        "\n",
+        "print(\"Fetching historical data for AAPL...\")\n",
+        "df = yf.download(\"AAPL\", start=\"2015-01-01\", end=\"2024-01-01\", progress=False)\n",
+        "\n",
+        "if isinstance(df.columns, pd.MultiIndex):\n",
+        "    df.columns = df.columns.get_level_values(0)\n",
+        "\n",
+        "    data = df[['Close']].dropna().values\n",
+        "\n",
+        "    scaler = MinMaxScaler(feature_range=(0, 1))\n",
+        "    scaled_data = scaler.fit_transform(data).flatten()\n",
+        "\n",
+        "    LOOKBACK = 60\n",
+        "    windows = sliding_window_view(scaled_data, window_shape=LOOKBACK + 1)\n",
+        "    X = windows[:, :-1]\n",
+        "    y = windows[:, -1]\n",
+        "\n",
+        "    split_idx = int(len(X) * 0.8)\n",
+        "    X_train = X[:split_idx]\n",
+        "    X_test = X[split_idx:]\n",
+        "    y_train = y[:split_idx]\n",
+        "    y_test = y[split_idx:]\n",
+        "\n",
+        "    X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))\n",
+        "    X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))\n",
+        "\n",
+        "    print(f\"X_train shape: {X_train.shape} | y_train shape: {y_train.shape}\")\n",
+        "    print(f\"X_test shape:  {X_test.shape}  | y_test shape:  {y_test.shape}\")\n",
+        "\n",
+        "    joblib.dump(scaler, \"stock_scaler.pkl\")\n",
+        "    np.save(\"X_train.npy\", X_train)\n",
+        "    np.save(\"X_test.npy\", X_test)\n",
+        "    np.save(\"y_train.npy\", y_train)\n",
+        "    np.save(\"y_test.npy\", y_test)\n",
+        "\n",
+        "    print(\"Day 2 completed successfully! Arrays and 'stock_scaler.pkl' saved.\")\n",
+        ""
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 0
+        },
+        "id": "9cq3kF8r0MBt",
+        "outputId": "e6aedea7-03cf-403e-8f41-3df23dc7ab7b"
+      },
+      "execution_count": 3,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Fetching historical data for AAPL...\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/tmp/ipykernel_3031/2713867457.py:9: FutureWarning: YF.download() has changed argument auto_adjust default to True\n",
+            "  df = yf.download(\"AAPL\", start=\"2015-01-01\", end=\"2024-01-01\", progress=False)\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "X_train shape: (1763, 60, 1) | y_train shape: (1763,)\n",
+            "X_test shape:  (441, 60, 1)  | y_test shape:  (441,)\n",
+            "Day 2 completed successfully! Arrays and 'stock_scaler.pkl' saved.\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
